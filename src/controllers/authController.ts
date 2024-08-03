@@ -62,6 +62,11 @@ export const loginUser = async (
                     console.error("Error logging in user:", err);
                     return next(err);
                 }
+                res.cookie("connect.sid", req.sessionID, {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === "production",
+                    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+                });
                 return res.send({
                     user: {
                         id: user.id,

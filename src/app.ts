@@ -1,32 +1,31 @@
 import express from "express";
 import session from "express-session";
-import passport from "passport";
-import cors from "cors";
 import { pool } from "./config/database";
 import pgSession from "connect-pg-simple";
-import "./config/passport";
+import cors from "cors";
 import authRoutes from "./routes/authRoutes";
-import invoicesRoutes from "./routes/invoiceRoutes";
-import { confirmEmail, registerUser } from "./controllers/authController";
-// Import other necessary modules
+import invoiceRoutes from "./routes/invoiceRoutes";
+import dotenv from "dotenv";
+import "./config/passport";
+import passport from "passport";
+
+dotenv.config();
 
 const app = express();
-const PgSession = pgSession(session);
 
-// CORS configuration
 const corsOptions = {
     origin: process.env.FRONTEND_URL,
     credentials: true,
     optionsSuccessStatus: 200,
 };
 
-// Apply CORS middleware
 app.use(cors(corsOptions));
 
-// Handle preflight requests
-app.options("*", cors(corsOptions));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Session configuration
+const PgSession = pgSession(session);
 app.use(
     session({
         store: new PgSession({
@@ -45,16 +44,12 @@ app.use(
     }),
 );
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Use auth routes
+// Routes
 app.use("/auth", authRoutes);
-// Other routes
-app.use("/api", invoicesRoutes);
+app.use("/api", invoiceRoutes);
 
 const port = process.env.PORT || 8080;
 app.listen(port, () => {
