@@ -9,7 +9,7 @@ export const sendConfirmationEmail = async (
     userEmail: string,
     confirmationToken: string,
 ) => {
-    const url = `http://localhost:3000/auth/confirm-email?token=${confirmationToken}`;
+    const url = `https://invoice-tracker.adamrichardturner.dev/auth/confirm-email?token=${confirmationToken}`;
 
     await resend.emails.send({
         from: "hello@adamrichardturner.dev",
