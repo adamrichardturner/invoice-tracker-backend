@@ -14,7 +14,10 @@ dotenv.config();
 const app = express();
 
 const corsOptions = {
-    origin: process.env.FRONTEND_URL,
+    origin:
+        process.env.NODE_ENV === "production"
+            ? "https://invoice-tracker.adamrichardturner.dev"
+            : "http://localhost:5000",
     credentials: true,
     optionsSuccessStatus: 200,
 };
@@ -26,6 +29,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Session configuration
 const PgSession = pgSession(session);
+
 app.use(
     session({
         store: new PgSession({
@@ -36,10 +40,10 @@ app.use(
         resave: false,
         saveUninitialized: false,
         cookie: {
-            secure: process.env.NODE_ENV === "production",
-            maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+            secure: process.env.NODE_ENV === "production", // must be true if using HTTPS
             httpOnly: true,
             sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+            maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
         },
     }),
 );
