@@ -16,18 +16,9 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 8080;
 
-// Read allowed origins from environment variables and split into an array
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [];
-
 app.use(
     cors({
-        origin: (origin, callback) => {
-            if (!origin || allowedOrigins.includes(origin)) {
-                callback(null, true);
-            } else {
-                callback(new Error("Not allowed by CORS"));
-            }
-        },
+        origin: true,
         methods: "GET,POST,PUT,DELETE,OPTIONS",
         allowedHeaders: "Content-Type, Authorization",
         credentials: true,
@@ -60,8 +51,8 @@ app.use(
         resave: false,
         saveUninitialized: false,
         cookie: {
-            secure: process.env.NODE_ENV === "production", // Use secure cookies in production
-            maxAge: 30 * 24 * 60 * 60 * 1000, // Cookie expiration: 30 days
+            secure: process.env.NODE_ENV === "production",
+            maxAge: 30 * 24 * 60 * 60 * 1000,
             httpOnly: true,
         },
     }),
