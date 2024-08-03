@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import { pool } from "../config/database";
-import { InvoiceItem } from "../models/invoiceItem";
 import Decimal from "decimal.js";
 
 export const createInvoice = async (req: Request, res: Response) => {
@@ -246,10 +245,12 @@ export const updateInvoice = async (req: Request, res: Response) => {
             ],
         );
 
-        // Update invoice items
+        // Delete old invoice items
         await client.query(`DELETE FROM invoice_items WHERE invoice_id = $1`, [
             id,
         ]);
+
+        // Insert updated invoice items
         for (const item of items) {
             await client.query(
                 `INSERT INTO invoice_items (
@@ -267,9 +268,20 @@ export const updateInvoice = async (req: Request, res: Response) => {
             );
         }
 
+        // Fetch the updated invoice items
+        const itemsResult = await client.query(
+            `SELECT item_description, item_quantity, item_price, item_total 
+             FROM invoice_items WHERE invoice_id = $1`,
+            [id],
+        );
+
         await client.query("COMMIT");
 
-        res.json(result.rows[0]);
+        // Return the updated invoice along with its items
+        res.json({
+            ...result.rows[0],
+            items: itemsResult.rows,
+        });
     } catch (err) {
         await client.query("ROLLBACK");
         console.error("Error in updateInvoice:", err);
@@ -286,17 +298,34 @@ export const updateInvoiceStatus = async (req: Request, res: Response) => {
     const client = await pool.connect();
 
     try {
+        await client.query("BEGIN");
+
         const result = await client.query(
             `UPDATE invoices SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *`,
             [status, id],
         );
 
         if (result.rowCount === 0) {
+            await client.query("ROLLBACK");
             return res.status(404).json({ message: "Invoice not found" });
         }
 
-        res.json(result.rows[0]);
+        // Fetch the updated invoice items
+        const itemsResult = await client.query(
+            `SELECT item_description, item_quantity, item_price, item_total 
+             FROM invoice_items WHERE invoice_id = $1`,
+            [id],
+        );
+
+        await client.query("COMMIT");
+
+        // Return the updated invoice along with its items
+        res.json({
+            ...result.rows[0],
+            items: itemsResult.rows,
+        });
     } catch (err) {
+        await client.query("ROLLBACK");
         console.error("Error in updateInvoiceStatus:", err);
         res.status(500).send("Server error.");
     } finally {

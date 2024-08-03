@@ -1,11 +1,10 @@
-export interface User extends Express.User {
+export interface User {
     id: string;
     username: string;
     email: string;
     password_hash: string;
+    email_confirmation_token?: string;
     email_confirmed?: boolean;
-    google_id?: string;
-    twitter_id?: string;
     profile_image_url?: string;
     created_at?: Date;
 }

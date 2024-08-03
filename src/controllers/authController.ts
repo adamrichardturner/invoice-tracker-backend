@@ -4,7 +4,6 @@ import bcrypt from "bcrypt";
 import { pool } from "../config/database";
 import { sendConfirmationEmail } from "../utils/email";
 import { v4 as uuidv4 } from "uuid";
-import { AuthInfo } from "../types/auth";
 import { User } from "../models/user";
 
 export const registerUser = async (req: Request, res: Response) => {
@@ -50,61 +49,39 @@ export const loginUser = async (
 ) => {
     passport.authenticate(
         "local",
-        async (err: Error, user: User, info: AuthInfo) => {
-            try {
+        (err: any, user: User, info: { message: any }) => {
+            if (err) {
+                console.error("Error during authentication:", err);
+                return next(err);
+            }
+            if (!user) {
+                return res.status(400).send(info.message);
+            }
+            req.logIn(user, (err) => {
                 if (err) {
-                    console.error("Error during authentication:", err);
+                    console.error("Error logging in user:", err);
                     return next(err);
                 }
-                if (!user) {
-                    return res.status(400).send(info.message);
-                }
-                req.logIn(user, (err: Error) => {
-                    if (err) {
-                        console.error("Error logging in user:", err);
-                        return next(err);
-                    }
-                    res.cookie("connect.sid", req.sessionID, {
-                        httpOnly: true,
-                        secure: process.env.NODE_ENV === "production",
-                        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-                    });
-                    return res.send({
-                        user: sanitizeUser(user),
-                        sessionID: req.sessionID,
-                    });
+                return res.send({
+                    user: {
+                        id: user.id,
+                        username: user.username,
+                        email: user.email,
+                    },
+                    sessionID: req.sessionID,
                 });
-            } catch (err) {
-                console.error("Unexpected error during login:", err);
-                res.status(500).send("Server error.");
-            }
+            });
         },
     )(req, res, next);
 };
 
-export const logoutUser = async (req: Request, res: Response) => {
-    try {
-        req.logout((err) => {
-            if (err) {
-                console.error("Error logging out user:", err);
-                return res.status(500).send("Failed to log out.");
-            }
-            res.clearCookie("connect.sid");
-            res.send("Logged out successfully.");
-        });
-    } catch (err) {
-        console.error("Unexpected error during logout:", err);
-        res.status(500).send("Server error.");
-    }
-};
-
-const sanitizeUser = (user: User) => {
-    return {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        email_confirmed: user.email_confirmed,
-        profile_image_url: user.profile_image_url,
-        created_at: user.created_at,
-    };
+export const logoutUser = (req: Request, res: Response) => {
+    req.logout((err) => {
+        if (err) {
+            console.error("Error logging out user:", err);
+            return res.status(500).send("Failed to log out.");
+        }
+        res.clearCookie("connect.sid");
+        res.send("Logged out successfully.");
+    });
 };
