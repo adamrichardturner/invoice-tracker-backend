@@ -1,4 +1,3 @@
-# Stage 1: Build the TypeScript code
 FROM node:18 AS builder
 
 WORKDIR /usr/src/app
