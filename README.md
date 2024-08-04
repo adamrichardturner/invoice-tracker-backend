@@ -1,6 +1,6 @@
 # Invoice Tracker - Backend
 
-This is the backend server for the Invoice Management App, built with Express and written in TypeScript.
+This is the backend server for an Invoice Tracker App, built with Express and written in TypeScript.
 
 The server handles operations for an invoice management application with a Next.js frontend. You can find the frontend repository [here](https://github.com/adamrichardturner/invoice-tracker-frontend).
 
