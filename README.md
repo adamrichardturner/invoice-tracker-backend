@@ -1,4 +1,4 @@
-# Invoice Management App - Backend
+# Invoice Tracker - Backend
 
 This is the backend server for the Invoice Management App, built with Express and written in TypeScript.
 
