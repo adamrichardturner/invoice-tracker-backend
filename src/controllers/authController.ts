@@ -34,14 +34,17 @@ export const registerUser = async (req: Request, res: Response) => {
 
 export const confirmEmail = async (req: Request, res: Response) => {
     const { token } = req.query;
+
     try {
         const result = await pool.query(
             "UPDATE users SET email_confirmed = TRUE, email_confirmation_token = NULL WHERE email_confirmation_token = $1 RETURNING *",
             [token],
         );
+
         if (result.rowCount === 0) {
             return res.status(400).send("Invalid token.");
         }
+
         res.send("Email confirmed. You can now log in.");
     } catch (err) {
         console.error("Error confirming email:", err);

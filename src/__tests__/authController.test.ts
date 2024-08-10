@@ -28,8 +28,14 @@ describe("Auth Controller", () => {
     });
 
     afterAll(async () => {
+        // Close the server and database connection
+        await new Promise<void>((resolve, reject) => {
+            server.close((err) => {
+                if (err) return reject(err);
+                resolve();
+            });
+        });
         await pool.end();
-        server.close();
     });
 
     describe("POST /user/register", () => {
@@ -60,6 +66,9 @@ describe("Auth Controller", () => {
 
     describe("POST /user/login", () => {
         it("should log in a user with valid credentials", async () => {
+            // Confirm email before attempting to log in
+            await request(app).get(`/user/confirm-email?token=${token}`);
+
             const res = await request(app).post("/user/login").send({
                 email: email,
                 password: password,
@@ -82,6 +91,9 @@ describe("Auth Controller", () => {
     describe("POST /user/logout", () => {
         it("should log out the user", async () => {
             const agent = request.agent(app);
+
+            // Confirm email and log in before attempting to log out
+            await request(app).get(`/user/confirm-email?token=${token}`);
 
             await agent.post("/user/login").send({
                 email: email,
