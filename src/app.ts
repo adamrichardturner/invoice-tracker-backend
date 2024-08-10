@@ -56,7 +56,7 @@ app.use("/api", invoiceRoutes);
 
 let server: http.Server;
 
-if (process.env.NODE_ENV !== "test") {
+if (process.env.NODE_ENV !== "development") {
     const port = process.env.PORT || 8080;
     server = app.listen(port, () => {
         console.log(`Server running at http://localhost:${port}/`);

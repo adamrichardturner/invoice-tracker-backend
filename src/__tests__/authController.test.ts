@@ -28,14 +28,10 @@ describe("Auth Controller", () => {
     });
 
     afterAll(async () => {
-        // Close the server and database connection
-        await new Promise<void>((resolve, reject) => {
-            server.close((err) => {
-                if (err) return reject(err);
-                resolve();
-            });
-        });
         await pool.end();
+        if (server) {
+            server.close();
+        }
     });
 
     describe("POST /user/register", () => {

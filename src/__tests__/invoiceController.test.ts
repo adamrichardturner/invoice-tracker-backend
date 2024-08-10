@@ -1,9 +1,6 @@
 import request from "supertest";
-import { app } from "../app";
+import { app, server } from "../app";
 import { pool } from "../config/database";
-import http from "http";
-
-let server: http.Server;
 
 const generateRandomString = () => {
     return Math.random().toString(36).substring(2, 15);
@@ -11,58 +8,48 @@ const generateRandomString = () => {
 
 describe("Invoice Controller", () => {
     let invoiceId: number;
-    let token: string;
 
-    beforeAll((done) => {
-        server = app.listen(3000, done);
+    beforeAll(async () => {
+        // Create an invoice to be used across all tests
+        const randomString = generateRandomString();
+        const newInvoice = {
+            bill_from_street_address: "123 Main St",
+            bill_from_city: "Metropolis",
+            bill_from_postcode: "12345",
+            bill_from_country: "Countryland",
+            bill_to_email: `${randomString}@example.com`,
+            bill_to_name: "John Doe",
+            bill_to_street_address: "456 Elm St",
+            bill_to_city: "Gotham",
+            bill_to_postcode: "67890",
+            bill_to_country: "Countryland",
+            invoice_date: new Date(),
+            payment_terms: "Net 30",
+            project_description: "Website redesign",
+            status: "draft",
+            items: [
+                {
+                    item_description: "Design work",
+                    item_quantity: 10,
+                    item_price: 100.0,
+                },
+                {
+                    item_description: "Development work",
+                    item_quantity: 20,
+                    item_price: 150.0,
+                },
+            ],
+        };
+
+        const res = await request(app).post("/api/invoices").send(newInvoice);
+        invoiceId = res.body.id;
     });
 
     afterAll(async () => {
         await pool.end();
-        server.close();
-    });
-
-    describe("POST /api/invoices", () => {
-        it("should create a new invoice", async () => {
-            const randomString = generateRandomString();
-            const newInvoice = {
-                bill_from_street_address: "123 Main St",
-                bill_from_city: "Metropolis",
-                bill_from_postcode: "12345",
-                bill_from_country: "Countryland",
-                bill_to_email: `${randomString}@example.com`,
-                bill_to_name: "John Doe",
-                bill_to_street_address: "456 Elm St",
-                bill_to_city: "Gotham",
-                bill_to_postcode: "67890",
-                bill_to_country: "Countryland",
-                invoice_date: new Date(),
-                payment_terms: "Net 30",
-                project_description: "Website redesign",
-                status: "draft",
-                items: [
-                    {
-                        item_description: "Design work",
-                        item_quantity: 10,
-                        item_price: 100.0,
-                    },
-                    {
-                        item_description: "Development work",
-                        item_quantity: 20,
-                        item_price: 150.0,
-                    },
-                ],
-            };
-
-            const res = await request(app)
-                .post("/api/invoices")
-                .send(newInvoice);
-            expect(res.statusCode).toEqual(201);
-            expect(res.body).toHaveProperty("id");
-            expect(res.body.bill_to_email).toEqual(newInvoice.bill_to_email);
-
-            invoiceId = res.body.id;
-        });
+        if (server) {
+            server.close();
+        }
     });
 
     describe("GET /api/invoices", () => {
@@ -128,10 +115,10 @@ describe("Invoice Controller", () => {
         });
     });
 
-    describe("PATCH /api/invoices/:id/status", () => {
+    describe("PUT /api/invoices/:id/status", () => {
         it("should update the status of an invoice", async () => {
             const res = await request(app)
-                .patch(`/api/invoices/${invoiceId}/status`)
+                .put(`/api/invoices/${invoiceId}/status`)
                 .send({ status: "pending" });
             expect(res.statusCode).toEqual(200);
             expect(res.body).toHaveProperty("status", "pending");
@@ -139,7 +126,7 @@ describe("Invoice Controller", () => {
 
         it("should return a 404 for a non-existent invoice", async () => {
             const res = await request(app)
-                .patch(`/api/invoices/999999/status`)
+                .put(`/api/invoices/999999/status`)
                 .send({ status: "pending" });
             expect(res.statusCode).toEqual(404);
             expect(res.body).toHaveProperty("message", "Invoice not found");

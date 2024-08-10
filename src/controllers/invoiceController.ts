@@ -26,7 +26,6 @@ export const createInvoice = async (req: Request, res: Response) => {
     try {
         await client.query("BEGIN");
 
-        // Calculate the total price of all items
         let invoiceTotal = new Decimal(0);
         for (const item of items) {
             const itemTotal = new Decimal(item.item_price).mul(
@@ -35,7 +34,6 @@ export const createInvoice = async (req: Request, res: Response) => {
             invoiceTotal = invoiceTotal.add(itemTotal);
         }
 
-        // Convert invoiceTotal to a number for insertion
         const invoiceTotalNumber = invoiceTotal.toNumber();
 
         const result = await client.query(
@@ -193,7 +191,6 @@ export const updateInvoice = async (req: Request, res: Response) => {
     try {
         await client.query("BEGIN");
 
-        // Calculate the total price of all items
         let invoiceTotal = new Decimal(0);
         for (const item of items) {
             const itemTotal = new Decimal(item.item_price).mul(
@@ -202,10 +199,8 @@ export const updateInvoice = async (req: Request, res: Response) => {
             invoiceTotal = invoiceTotal.add(itemTotal);
         }
 
-        // Convert invoiceTotal to a number for insertion
         const invoiceTotalNumber = invoiceTotal.toNumber();
 
-        // Update invoice details
         const result = await client.query(
             `UPDATE invoices SET
                 bill_from_street_address = $1,
@@ -236,7 +231,7 @@ export const updateInvoice = async (req: Request, res: Response) => {
                 bill_to_city,
                 bill_to_postcode,
                 bill_to_country,
-                new Date(invoice_date), // Ensure this is a Date object
+                new Date(invoice_date),
                 payment_terms,
                 project_description,
                 status,
@@ -245,12 +240,10 @@ export const updateInvoice = async (req: Request, res: Response) => {
             ],
         );
 
-        // Delete old invoice items
         await client.query(`DELETE FROM invoice_items WHERE invoice_id = $1`, [
             id,
         ]);
 
-        // Insert updated invoice items
         for (const item of items) {
             await client.query(
                 `INSERT INTO invoice_items (
@@ -268,7 +261,6 @@ export const updateInvoice = async (req: Request, res: Response) => {
             );
         }
 
-        // Fetch the updated invoice items
         const itemsResult = await client.query(
             `SELECT item_description, item_quantity, item_price, item_total 
              FROM invoice_items WHERE invoice_id = $1`,
@@ -277,7 +269,6 @@ export const updateInvoice = async (req: Request, res: Response) => {
 
         await client.query("COMMIT");
 
-        // Return the updated invoice along with its items
         res.json({
             ...result.rows[0],
             items: itemsResult.rows,
@@ -310,7 +301,6 @@ export const updateInvoiceStatus = async (req: Request, res: Response) => {
             return res.status(404).json({ message: "Invoice not found" });
         }
 
-        // Fetch the updated invoice items
         const itemsResult = await client.query(
             `SELECT item_description, item_quantity, item_price, item_total 
              FROM invoice_items WHERE invoice_id = $1`,
@@ -319,7 +309,6 @@ export const updateInvoiceStatus = async (req: Request, res: Response) => {
 
         await client.query("COMMIT");
 
-        // Return the updated invoice along with its items
         res.json({
             ...result.rows[0],
             items: itemsResult.rows,
@@ -339,10 +328,22 @@ export const deleteInvoice = async (req: Request, res: Response) => {
 
     try {
         await client.query("BEGIN");
+
+        const invoiceResult = await client.query(
+            "SELECT id FROM invoices WHERE id = $1",
+            [id],
+        );
+
+        if (invoiceResult.rowCount === 0) {
+            await client.query("ROLLBACK");
+            return res.status(404).json({ message: "Invoice not found" });
+        }
+
         await client.query("DELETE FROM invoice_items WHERE invoice_id = $1", [
             id,
         ]);
         await client.query("DELETE FROM invoices WHERE id = $1", [id]);
+
         await client.query("COMMIT");
 
         res.send("Invoice deleted successfully.");
