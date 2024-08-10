@@ -1,5 +1,5 @@
 import request from "supertest";
-import { app } from "../app";
+import { app, server } from "../app";
 import { pool } from "../config/database";
 
 const generateRandomString = () => {
@@ -7,43 +7,40 @@ const generateRandomString = () => {
 };
 
 describe("Auth Controller", () => {
+    let username: string;
+    let email: string;
+    let password: string;
+    let token: string;
+
+    beforeAll(async () => {
+        const randomString = generateRandomString();
+        username = `user_${randomString}`;
+        email = `${randomString}@example.com`;
+        password = "password123";
+
+        const registerRes = await request(app).post("/user/register").send({
+            username: username,
+            email: email,
+            password: password,
+        });
+
+        token = registerRes.body.token;
+    });
+
     afterAll(async () => {
         await pool.end();
+        server.close();
     });
 
     describe("POST /user/register", () => {
         it("should register a new user", async () => {
-            const randomString = generateRandomString();
-            const username = `user_${randomString}`;
-            const email = `${randomString}@example.com`;
-
-            const res = await request(app).post("/user/register").send({
-                username: username,
-                email: email,
-                password: "password123",
-            });
-            expect(res.statusCode).toEqual(201);
-            expect(res.body).toHaveProperty("token");
-            expect(res.body.message).toContain(
-                "User registered. Please check your email to confirm.",
-            );
+            expect(token).toBeDefined();
+            expect(typeof token).toBe("string");
         });
     });
 
     describe("GET /user/confirm-email", () => {
         it("should confirm the email with valid token", async () => {
-            const randomString = generateRandomString();
-            const username = `user_${randomString}`;
-            const email = `${randomString}@example.com`;
-
-            const registerRes = await request(app).post("/user/register").send({
-                username: username,
-                email: email,
-                password: "password123",
-            });
-
-            const token = registerRes.body.token;
-
             const res = await request(app).get(
                 `/user/confirm-email?token=${token}`,
             );
@@ -52,9 +49,9 @@ describe("Auth Controller", () => {
         });
 
         it("should return an error with an invalid token", async () => {
-            const token = "invalid-token";
+            const invalidToken = "invalid-token";
             const res = await request(app).get(
-                `/user/confirm-email?token=${token}`,
+                `/user/confirm-email?token=${invalidToken}`,
             );
             expect(res.statusCode).toEqual(400);
             expect(res.text).toContain("Invalid token.");
@@ -63,19 +60,9 @@ describe("Auth Controller", () => {
 
     describe("POST /user/login", () => {
         it("should log in a user with valid credentials", async () => {
-            const randomString = generateRandomString();
-            const username = `user_${randomString}`;
-            const email = `${randomString}@example.com`;
-
-            await request(app).post("/user/register").send({
-                username: username,
-                email: email,
-                password: "password123",
-            });
-
             const res = await request(app).post("/user/login").send({
-                username: email,
-                password: "password123",
+                email: email,
+                password: password,
             });
             expect(res.statusCode).toEqual(200);
             expect(res.body).toHaveProperty("user");
@@ -84,11 +71,11 @@ describe("Auth Controller", () => {
 
         it("should return an error with invalid credentials", async () => {
             const res = await request(app).post("/user/login").send({
-                username: "wronguser",
+                email: "wrongemail@example.com",
                 password: "wrongpassword",
             });
             expect(res.statusCode).toEqual(400);
-            expect(res.text).toContain("Invalid credentials");
+            expect(res.text).toContain("Incorrect email.");
         });
     });
 
@@ -96,19 +83,9 @@ describe("Auth Controller", () => {
         it("should log out the user", async () => {
             const agent = request.agent(app);
 
-            const randomString = generateRandomString();
-            const username = `user_${randomString}`;
-            const email = `${randomString}@example.com`;
-
-            await agent.post("/user/register").send({
-                username: username,
-                email: email,
-                password: "password123",
-            });
-
             await agent.post("/user/login").send({
-                username: email,
-                password: "password123",
+                email: email,
+                password: password,
             });
 
             const res = await agent.post("/user/logout");

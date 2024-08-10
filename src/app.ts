@@ -56,6 +56,8 @@ app.use("/user", authRoutes);
 app.use("/api", invoiceRoutes);
 
 const port = process.env.PORT || 8080;
-app.listen(port, () => {
+const server = app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}/`);
 });
+
+export { server };

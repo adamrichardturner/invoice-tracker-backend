@@ -21,7 +21,7 @@ export const registerUser = async (req: Request, res: Response) => {
             message: "User registered. Please check your email to confirm.",
         };
 
-        if (process.env.NODE_ENV === "test") {
+        if (process.env.NODE_ENV === "development") {
             response.token = emailConfirmationToken;
         }
 
