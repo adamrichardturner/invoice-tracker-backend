@@ -8,10 +8,16 @@ import invoiceRoutes from "./routes/invoiceRoutes";
 import dotenv from "dotenv";
 import "./config/passport";
 import passport from "passport";
+import http from "http";
 
-dotenv.config();
+dotenv.config({
+    path:
+        process.env.NODE_ENV === "production"
+            ? ".env.production.local"
+            : ".env.development.local",
+});
 
-const app = express();
+export const app = express();
 
 const corsOptions = {
     origin:
@@ -27,7 +33,6 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Session configuration
 const PgSession = pgSession(session);
 
 app.use(
@@ -40,10 +45,10 @@ app.use(
         resave: false,
         saveUninitialized: false,
         cookie: {
-            secure: process.env.NODE_ENV === "production", // must be true if using HTTPS
+            secure: process.env.NODE_ENV === "production",
             httpOnly: true,
             sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-            maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+            maxAge: 30 * 24 * 60 * 60 * 1000,
         },
     }),
 );
@@ -51,11 +56,16 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Routes
 app.use("/user", authRoutes);
 app.use("/api", invoiceRoutes);
 
-const port = process.env.PORT || 8080;
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}/`);
-});
+let server: http.Server;
+
+if (process.env.NODE_ENV !== "development") {
+    const port = process.env.PORT || 8080;
+    server = app.listen(port, () => {
+        console.log(`Server running at http://localhost:${port}/`);
+    });
+}
+
+export { server };

@@ -16,9 +16,16 @@ export const registerUser = async (req: Request, res: Response) => {
             [username, email, hashedPassword, emailConfirmationToken],
         );
         await sendConfirmationEmail(email, emailConfirmationToken);
-        res.status(201).send(
-            "User registered. Please check your email to confirm.",
-        );
+
+        const response: any = {
+            message: "User registered. Please check your email to confirm.",
+        };
+
+        if (process.env.NODE_ENV === "development") {
+            response.token = emailConfirmationToken;
+        }
+
+        res.status(201).json(response);
     } catch (err) {
         console.error("Error registering user:", err);
         res.status(500).send("Server error.");
@@ -27,14 +34,17 @@ export const registerUser = async (req: Request, res: Response) => {
 
 export const confirmEmail = async (req: Request, res: Response) => {
     const { token } = req.query;
+
     try {
         const result = await pool.query(
             "UPDATE users SET email_confirmed = TRUE, email_confirmation_token = NULL WHERE email_confirmation_token = $1 RETURNING *",
             [token],
         );
+
         if (result.rowCount === 0) {
             return res.status(400).send("Invalid token.");
         }
+
         res.send("Email confirmed. You can now log in.");
     } catch (err) {
         console.error("Error confirming email:", err);
