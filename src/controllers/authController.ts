@@ -16,9 +16,16 @@ export const registerUser = async (req: Request, res: Response) => {
             [username, email, hashedPassword, emailConfirmationToken],
         );
         await sendConfirmationEmail(email, emailConfirmationToken);
-        res.status(201).send(
-            "User registered. Please check your email to confirm.",
-        );
+
+        const response: any = {
+            message: "User registered. Please check your email to confirm.",
+        };
+
+        if (process.env.NODE_ENV === "test") {
+            response.token = emailConfirmationToken;
+        }
+
+        res.status(201).json(response);
     } catch (err) {
         console.error("Error registering user:", err);
         res.status(500).send("Server error.");

@@ -1,7 +1,9 @@
 import { Pool } from "pg";
 import dotenv from "dotenv";
 
-dotenv.config();
+dotenv.config({
+    path: `.env.${process.env.NODE_ENV || "development"}`,
+});
 
 export const pool = new Pool({
     user: process.env.DB_USER,
@@ -15,7 +17,9 @@ export const pool = new Pool({
 });
 
 pool.on("connect", () => {
-    console.log("Connected to the database");
+    console.log(
+        `Connected to the ${process.env.NODE_ENV} database (${process.env.DB_NAME})`,
+    );
 });
 
 pool.on("error", (err) => {

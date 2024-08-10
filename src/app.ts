@@ -11,7 +11,7 @@ import passport from "passport";
 
 dotenv.config();
 
-const app = express();
+export const app = express();
 
 const corsOptions = {
     origin:
