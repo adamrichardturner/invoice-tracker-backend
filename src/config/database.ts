@@ -1,8 +1,13 @@
 import { Pool } from "pg";
 import dotenv from "dotenv";
 
+const envFile =
+    process.env.NODE_ENV === "production"
+        ? ".env.production.local"
+        : ".env.development.local";
+
 dotenv.config({
-    path: `.env.${process.env.NODE_ENV || "development"}`,
+    path: envFile,
 });
 
 export const pool = new Pool({
