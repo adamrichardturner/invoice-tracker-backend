@@ -18,7 +18,7 @@ app.use(
         secret: process.env.SESSION_SECRET!,
         resave: false,
         saveUninitialized: true,
-        cookie: { secure: false }, // Set secure to true in production
+        cookie: { secure: true }, // Set secure to true in production
     }),
 );
 
