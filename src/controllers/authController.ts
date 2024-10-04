@@ -100,3 +100,54 @@ export const logoutUser = (req: Request, res: Response) => {
         res.send("Logged out successfully.");
     });
 };
+
+export const loginWithDemoAccount = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+) => {
+    const demoEmail = process.env.DEMO_EMAIL;
+    const demoPassword = process.env.DEMO_PASSWORD;
+
+    if (!demoEmail || !demoPassword) {
+        return res
+            .status(500)
+            .json({ message: "Demo credentials not configured" });
+    }
+
+    passport.authenticate(
+        "local",
+        (err: any, user: User, info: { message: string }) => {
+            if (err) {
+                console.error("Error during demo authentication:", err);
+                return next(err);
+            }
+            if (!user) {
+                return res.status(400).json({ message: "Demo login failed" });
+            }
+            req.logIn(user, (err) => {
+                if (err) {
+                    console.error("Error logging in demo user:", err);
+                    return next(err);
+                }
+                res.cookie("connect.sid", req.sessionID, {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === "production",
+                    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+                });
+                return res.json({
+                    user: {
+                        id: user.id,
+                        username: user.username,
+                        email: user.email,
+                    },
+                    sessionID: req.sessionID,
+                });
+            });
+        },
+    )(
+        { body: { email: demoEmail, password: demoPassword } } as Request,
+        res,
+        next,
+    );
+};
