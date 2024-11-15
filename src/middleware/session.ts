@@ -1,32 +1,35 @@
 import express from "express";
 import session from "express-session";
-import passport from "passport";
-import dotenv from "dotenv";
-import authRoutes from "../routes/authRoutes";
-import "./config/passport";
-
-dotenv.config();
+import cors from "cors";
 
 const app = express();
-const port = process.env.PORT || 3000;
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
+// CORS configuration
 app.use(
-    session({
-        secret: process.env.SESSION_SECRET!,
-        resave: false,
-        saveUninitialized: true,
-        cookie: { secure: true }, // Set secure to true in production
+    cors({
+        origin:
+            process.env.NODE_ENV === "production"
+                ? "https://invoice-tracker.adamrichardturner.dev"
+                : "http://localhost:3000",
+        credentials: true,
     }),
 );
 
-app.use(passport.initialize());
-app.use(passport.session());
+app.use(express.json());
 
-app.use("/auth", authRoutes);
+// Session configuration
+app.use(
+    session({
+        secret: process.env.SESSION_SECRET || "hamsandwhiches",
+        resave: false,
+        saveUninitialized: false,
+        cookie: {
+            secure: process.env.NODE_ENV === "production",
+            httpOnly: true,
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+            maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        },
+    }),
+);
 
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}/`);
-});
+export default app;
