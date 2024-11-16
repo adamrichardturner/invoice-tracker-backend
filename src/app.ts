@@ -1,15 +1,11 @@
 import express from "express";
-import session from "express-session";
-import { pool } from "./config/database";
-import pgSession from "connect-pg-simple";
 import cors from "cors";
+import jwt from "jsonwebtoken";
 import authRoutes from "./routes/authRoutes";
 import invoiceRoutes from "./routes/invoiceRoutes";
 import dotenv from "dotenv";
-import "./config/passport";
-import passport from "passport";
-import http from "http";
 
+// Load environment variables
 dotenv.config({
     path:
         process.env.NODE_ENV === "production"
@@ -17,55 +13,51 @@ dotenv.config({
             : ".env.development.local",
 });
 
+// Initialize express app
 export const app = express();
 
-const corsOptions = {
-    origin:
-        process.env.NODE_ENV === "production"
-            ? "https://invoice-tracker.adamrichardturner.dev"
-            : "http://localhost:5000",
-    credentials: true,
-    optionsSuccessStatus: 200,
-};
-
-app.use(cors(corsOptions));
-
+// Basic middleware
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-const PgSession = pgSession(session);
-
 app.use(
-    session({
-        store: new PgSession({
-            pool: pool,
-            tableName: "session",
-        }),
-        secret: process.env.SESSION_SECRET!,
-        resave: false,
-        saveUninitialized: false,
-        cookie: {
-            secure: process.env.NODE_ENV === "production",
-            httpOnly: true,
-            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-            maxAge: 30 * 24 * 60 * 60 * 1000,
-        },
+    cors({
+        origin:
+            process.env.NODE_ENV === "production"
+                ? "http://localhost:3000"
+                : "http://localhost:3000",
+        credentials: true,
     }),
 );
 
-app.use(passport.initialize());
-app.use(passport.session());
+// JWT Authentication middleware
+const authenticateToken = (req: any, res: any, next: any) => {
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
 
+    if (!token) {
+        return res.sendStatus(401);
+    }
+
+    jwt.verify(
+        token,
+        process.env.JWT_SECRET as string,
+        (err: any, user: any) => {
+            if (err) {
+                return res.sendStatus(403);
+            }
+            req.user = user;
+            next();
+        },
+    );
+};
+
+// Routes
 app.use("/user", authRoutes);
-app.use("/api", invoiceRoutes);
+app.use("/api", authenticateToken, invoiceRoutes);
 
-let server: http.Server;
-
-if (process.env.NODE_ENV !== "development") {
-    const port = process.env.PORT || 8080;
-    server = app.listen(port, () => {
-        console.log(`Server running at http://localhost:${port}/`);
-    });
-}
+// Start server
+const port = process.env.PORT || 5000;
+const server = app.listen(port, () => {
+    console.log(`Server running at http://localhost:${port}/`);
+});
 
 export { server };
