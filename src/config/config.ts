@@ -11,5 +11,4 @@ export const config = {
     jwt: {
         secret: process.env.JWT_SECRET || "fallback_secret_key_for_development",
     },
-    // You can add other configuration variables here
 };

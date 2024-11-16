@@ -22,7 +22,7 @@ app.use(
     cors({
         origin:
             process.env.NODE_ENV === "production"
-                ? "https://invoice-tracker.adamrichardturner.dev"
+                ? "http://localhost:3000"
                 : "http://localhost:3000",
         credentials: true,
     }),
@@ -52,7 +52,7 @@ const authenticateToken = (req: any, res: any, next: any) => {
 
 // Routes
 app.use("/user", authRoutes);
-app.use("/api", authenticateToken, invoiceRoutes); // Protected routes
+app.use("/api", authenticateToken, invoiceRoutes);
 
 // Start server
 const port = process.env.PORT || 5000;
