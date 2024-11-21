@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import authRoutes from "./routes/authRoutes";
 import invoiceRoutes from "./routes/invoiceRoutes";
 import dotenv from "dotenv";
+import cookieParser from "cookie-parser";
 
 // Load environment variables
 dotenv.config({
@@ -18,6 +19,7 @@ export const app = express();
 
 // Basic middleware
 app.use(express.json());
+app.use(cookieParser());
 app.use(
     cors({
         origin:
@@ -30,8 +32,7 @@ app.use(
 
 // JWT Authentication middleware
 const authenticateToken = (req: any, res: any, next: any) => {
-    const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(" ")[1];
+    const token = req.cookies.token;
 
     if (!token) {
         return res.sendStatus(401);

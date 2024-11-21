@@ -1,23 +1,12 @@
 import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
-import { JwtPayload } from "../types/jwt";
-import { config } from "../config/config";
-
-declare global {
-    namespace Express {
-        interface Request {
-            user?: JwtPayload;
-        }
-    }
-}
+import jwt, { JwtPayload } from "jsonwebtoken";
 
 export const authenticateToken = (
     req: Request,
     res: Response,
     next: NextFunction,
 ) => {
-    const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(" ")[1];
+    const token = req.cookies.token;
 
     if (!token) {
         return res
@@ -26,10 +15,13 @@ export const authenticateToken = (
     }
 
     try {
-        const user = jwt.verify(token, config.jwt.secret) as JwtPayload;
-        req.user = user;
+        const decoded = jwt.verify(
+            token,
+            process.env.JWT_SECRET as string,
+        ) as JwtPayload;
+        req.user = decoded;
         next();
     } catch (error) {
-        return res.status(403).json({ message: "Invalid or expired token" });
+        return res.status(403).json({ message: "Invalid token" });
     }
 };
