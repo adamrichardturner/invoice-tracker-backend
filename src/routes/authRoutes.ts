@@ -55,9 +55,11 @@ router.post("/demo-login", async (req: Request, res: Response) => {
 
         // Set cookie
         res.cookie("token", token, {
+            domain: ".adamrichardturner.dev",
+            httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            path: "/",
-            maxAge: 24 * 60 * 60 * 1000,
+            sameSite: "lax",
+            maxAge: 24 * 60 * 60 * 1000, // 1 day
         });
 
         return res.json({ success: true });
