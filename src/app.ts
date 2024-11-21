@@ -30,30 +30,9 @@ app.use(
     }),
 );
 
-// JWT Authentication middleware
-const authenticateToken = (req: any, res: any, next: any) => {
-    const token = req.cookies.token;
-
-    if (!token) {
-        return res.sendStatus(401);
-    }
-
-    jwt.verify(
-        token,
-        process.env.JWT_SECRET as string,
-        (err: any, user: any) => {
-            if (err) {
-                return res.sendStatus(403);
-            }
-            req.user = user;
-            next();
-        },
-    );
-};
-
 // Routes
 app.use("/user", authRoutes);
-app.use("/api", authenticateToken, invoiceRoutes);
+app.use("/api", invoiceRoutes);
 
 // Start server
 const port = process.env.PORT || 5000;

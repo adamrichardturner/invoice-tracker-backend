@@ -7,11 +7,11 @@ import {
     updateInvoiceStatus,
     deleteInvoice,
 } from "../controllers/invoiceController";
-import { authenticateToken } from "../middleware/auth";
+import { auth } from "../middleware/auth";
 
 const router = Router();
 
-router.use(authenticateToken);
+router.use(auth);
 router.post("/invoices", createInvoice);
 router.get("/invoices", getInvoices);
 router.get("/invoices/:id", getInvoiceById);
