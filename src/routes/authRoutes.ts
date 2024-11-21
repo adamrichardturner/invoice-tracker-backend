@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { pool } from "../config/database"; // Adjust the import based on your structure
-import bcrypt from "bcrypt"; // Ensure bcrypt is installed: npm install bcrypt
+import { pool } from "../config/database";
+import bcrypt from "bcrypt";
 
 const router = express.Router();
 
@@ -42,6 +42,8 @@ router.post("/demo-login", async (req: Request, res: Response) => {
                 .json({ message: "Invalid demo credentials" });
         }
 
+        console.log("Demo login successful");
+
         // Generate JWT token
         const token = jwt.sign(
             { id: user.id, email: user.email },
@@ -49,11 +51,11 @@ router.post("/demo-login", async (req: Request, res: Response) => {
             { expiresIn: "24h" },
         );
 
+        console.log("Token:", token);
+
         // Set cookie
         res.cookie("token", token, {
-            httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
             path: "/",
             maxAge: 24 * 60 * 60 * 1000,
         });
