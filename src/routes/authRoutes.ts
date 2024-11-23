@@ -42,16 +42,12 @@ router.post("/demo-login", async (req: Request, res: Response) => {
                 .json({ message: "Invalid demo credentials" });
         }
 
-        console.log("Demo login successful");
-
         // Generate JWT token
         const token = jwt.sign(
             { id: user.id, email: user.email },
             process.env.JWT_SECRET as string,
             { expiresIn: "24h" },
         );
-
-        console.log("Token:", token);
 
         // Set cookie
         res.cookie("token", token, {
