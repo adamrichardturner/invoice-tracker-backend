@@ -451,7 +451,7 @@ function generateRetailerFromAddress(): {
         street: addr.street,
         city: addr.city,
         postcode: `${addr.outward} 1AA`,
-        country: addr.country,
+        country: "United Kingdom",
     };
 }
 
@@ -466,7 +466,7 @@ function generateCustomerAddress(): {
         street: addr.street,
         city: addr.city,
         postcode: `${addr.outward} 1AA`,
-        country: addr.country,
+        country: "United Kingdom",
     };
 }
 
