@@ -1,5 +1,6 @@
 import { pool } from "../config/database";
 import Decimal from "decimal.js";
+import bcrypt from "bcrypt";
 
 type PaymentTerms = "Net 30 Days" | "14 Days" | "7 Days";
 type InvoiceStatus = "draft" | "pending" | "paid";
@@ -315,8 +316,49 @@ async function ensureSeeded(): Promise<void> {
     }
 }
 
+async function ensureDemoUser(): Promise<void> {
+    const demoEmail = process.env.DEMO_EMAIL ?? "";
+    const demoPassword = process.env.DEMO_PASSWORD ?? "";
+
+    if (!demoEmail || !demoPassword) {
+        return;
+    }
+
+    const existing = await pool.query("SELECT id FROM users WHERE email = $1", [
+        demoEmail,
+    ]);
+
+    if (existing.rows.length > 0) {
+        return;
+    }
+
+    const localPart = demoEmail.split("@")[0] || "demo";
+    let candidate = localPart;
+
+    for (let i = 0; i < 20; i += 1) {
+        const check = await pool.query(
+            "SELECT 1 FROM users WHERE username = $1",
+            [candidate],
+        );
+        if (check.rows.length === 0) {
+            break;
+        }
+        candidate = `${localPart}${i + 1}`;
+    }
+
+    const passwordHash = await bcrypt.hash(demoPassword, 10);
+
+    await pool.query(
+        `INSERT INTO users (username, email, password_hash, email_confirmed)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (email) DO NOTHING`,
+        [candidate, demoEmail, passwordHash, true],
+    );
+}
+
 (async () => {
     try {
+        await ensureDemoUser();
         await ensureSeeded();
         // eslint-disable-next-line no-console
         console.log("Database seeded with luxury invoices.");
