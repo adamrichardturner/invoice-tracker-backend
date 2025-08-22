@@ -11,6 +11,18 @@ interface SeedItem {
     item_price: number;
 }
 
+interface CityInfo {
+    city: string;
+    country:
+        | "England"
+        | "Scotland"
+        | "Wales"
+        | "Northern Ireland"
+        | "United Kingdom";
+    streets: string[];
+    outwardCodes: string[];
+}
+
 const britishFirstNames = [
     "Oliver",
     "George",
@@ -53,25 +65,84 @@ const britishSurnames = [
     "White",
 ];
 
-const ukCities = [
-    "London",
-    "Manchester",
-    "Birmingham",
-    "Edinburgh",
-    "Glasgow",
-    "Bristol",
-    "Leeds",
-    "Liverpool",
-    "Cardiff",
-    "Newcastle upon Tyne",
-];
-
-const ukCountries = [
-    "United Kingdom",
-    "England",
-    "Scotland",
-    "Wales",
-    "Northern Ireland",
+const UK_ADDRESSES: CityInfo[] = [
+    {
+        city: "London",
+        country: "England",
+        streets: [
+            "Savile Row",
+            "Bond Street",
+            "Jermyn Street",
+            "Regent Street",
+            "Sloane Street",
+        ],
+        outwardCodes: ["W1", "SW1", "EC2", "N1"],
+    },
+    {
+        city: "Birmingham",
+        country: "England",
+        streets: ["Colmore Row", "Corporation Street", "New Street"],
+        outwardCodes: ["B1", "B2"],
+    },
+    {
+        city: "Manchester",
+        country: "England",
+        streets: [
+            "King Street",
+            "Deansgate",
+            "St Ann's Square",
+            "Spinningfields",
+        ],
+        outwardCodes: ["M1", "M2"],
+    },
+    {
+        city: "Edinburgh",
+        country: "Scotland",
+        streets: ["George Street", "Princes Street", "Royal Mile"],
+        outwardCodes: ["EH1", "EH2"],
+    },
+    {
+        city: "Glasgow",
+        country: "Scotland",
+        streets: ["Buchanan Street", "Sauchiehall Street", "Argyle Street"],
+        outwardCodes: ["G1", "G2"],
+    },
+    {
+        city: "Cardiff",
+        country: "Wales",
+        streets: ["St Mary Street", "Queen Street"],
+        outwardCodes: ["CF10", "CF11"],
+    },
+    {
+        city: "Belfast",
+        country: "Northern Ireland",
+        streets: ["Lisburn Road", "Donegall Place"],
+        outwardCodes: ["BT1", "BT9"],
+    },
+    {
+        city: "Leeds",
+        country: "England",
+        streets: ["Briggate", "The Headrow"],
+        outwardCodes: ["LS1"],
+    },
+    {
+        city: "Liverpool",
+        country: "England",
+        streets: ["Bold Street", "Lord Street"],
+        outwardCodes: ["L1"],
+    },
+    {
+        city: "Bristol",
+        country: "England",
+        streets: ["Park Street", "Queen Square"],
+        outwardCodes: ["BS1", "BS8"],
+    },
+    {
+        city: "Newcastle upon Tyne",
+        country: "England",
+        streets: ["Grey Street", "Grainger Street"],
+        outwardCodes: ["NE1"],
+    },
 ];
 
 const luxuryItemsCatalogue: SeedItem[] = [
@@ -188,10 +259,52 @@ function randomInt(minInclusive: number, maxInclusive: number): number {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function generatePostcode(): string {
-    const outward = `${String.fromCharCode(65 + randomInt(0, 25))}${randomInt(1, 9)}`;
-    const inward = `${randomInt(1, 9)}${String.fromCharCode(65 + randomInt(0, 25))}${String.fromCharCode(65 + randomInt(0, 25))}`;
-    return `${outward} ${inward}`;
+function generateInwardCode(): string {
+    const digit = randomInt(1, 9);
+    const letter1 = String.fromCharCode(65 + randomInt(0, 25));
+    const letter2 = String.fromCharCode(65 + randomInt(0, 25));
+    return `${digit}${letter1}${letter2}`;
+}
+
+function generatePostcodeFor(outwardBase: string): string {
+    const inward = generateInwardCode();
+    return `${outwardBase} ${inward}`;
+}
+
+function generateRetailerFromAddress(): {
+    street: string;
+    city: string;
+    postcode: string;
+    country: string;
+} {
+    const london = UK_ADDRESSES[0];
+    const street = `${randomInt(10, 199)} ${sample(london.streets)}`;
+    const outward = sample(london.outwardCodes);
+    const postcode = generatePostcodeFor(outward);
+    return {
+        street,
+        city: london.city,
+        postcode,
+        country: london.country,
+    };
+}
+
+function generateCustomerAddress(): {
+    street: string;
+    city: string;
+    postcode: string;
+    country: string;
+} {
+    const place = sample(UK_ADDRESSES);
+    const street = `${randomInt(1, 299)} ${sample(place.streets)}`;
+    const outward = sample(place.outwardCodes);
+    const postcode = generatePostcodeFor(outward);
+    return {
+        street,
+        city: place.city,
+        postcode,
+        country: place.country,
+    };
 }
 
 async function createInvoiceWithItems(index: number): Promise<void> {
@@ -200,15 +313,8 @@ async function createInvoiceWithItems(index: number): Promise<void> {
     const billToName = `${firstName} ${surname}`;
     const billToEmail = `${firstName.toLowerCase()}.${surname.toLowerCase()}@example.co.uk`;
 
-    const billFromStreet = `${randomInt(10, 99)} Savile Row`;
-    const billFromCity = "London";
-    const billFromPostcode = generatePostcode();
-    const billFromCountry = sample(ukCountries);
-
-    const billToStreet = `${randomInt(1, 199)} Regent Street`;
-    const billToCity = sample(ukCities);
-    const billToPostcode = generatePostcode();
-    const billToCountry = sample(ukCountries);
+    const from = generateRetailerFromAddress();
+    const to = generateCustomerAddress();
 
     const statusOptions: InvoiceStatus[] = ["draft", "pending", "paid"];
     const paymentTermsOptions: PaymentTerms[] = [
@@ -252,16 +358,16 @@ async function createInvoiceWithItems(index: number): Promise<void> {
                 $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
             ) RETURNING id`,
             [
-                billFromStreet,
-                billFromCity,
-                billFromPostcode,
-                billFromCountry,
+                from.street,
+                from.city,
+                from.postcode,
+                from.country,
                 billToEmail,
                 billToName,
-                billToStreet,
-                billToCity,
-                billToPostcode,
-                billToCountry,
+                to.street,
+                to.city,
+                to.postcode,
+                to.country,
                 invoiceDate,
                 sample(paymentTermsOptions),
                 `Luxury retail order #${index + 1}`,
