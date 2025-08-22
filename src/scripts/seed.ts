@@ -11,16 +11,13 @@ interface SeedItem {
     item_price: number;
 }
 
-interface CityInfo {
+type UKCountry = "England" | "Scotland" | "Wales" | "Northern Ireland";
+
+interface AddressEntry {
+    street: string;
     city: string;
-    country:
-        | "England"
-        | "Scotland"
-        | "Wales"
-        | "Northern Ireland"
-        | "United Kingdom";
-    streets: string[];
-    outwardCodes: string[];
+    outward: string; // outward postcode area/district (e.g., W1S, M3, BT1)
+    country: UKCountry;
 }
 
 const britishFirstNames = [
@@ -65,83 +62,267 @@ const britishSurnames = [
     "White",
 ];
 
-const UK_ADDRESSES: CityInfo[] = [
+const RETAILER_ADDRESSES: AddressEntry[] = [
     {
+        street: "12 Savile Row",
         city: "London",
+        outward: "W1S",
         country: "England",
-        streets: [
-            "Savile Row",
-            "Bond Street",
-            "Jermyn Street",
-            "Regent Street",
-            "Sloane Street",
-        ],
-        outwardCodes: ["W1", "SW1", "EC2", "N1"],
     },
     {
-        city: "Birmingham",
+        street: "180 Sloane Street",
+        city: "London",
+        outward: "SW1X",
         country: "England",
-        streets: ["Colmore Row", "Corporation Street", "New Street"],
-        outwardCodes: ["B1", "B2"],
     },
     {
+        street: "25 Jermyn Street",
+        city: "London",
+        outward: "SW1Y",
+        country: "England",
+    },
+    {
+        street: "200 Regent Street",
+        city: "London",
+        outward: "W1B",
+        country: "England",
+    },
+];
+
+const CUSTOMER_ADDRESSES: AddressEntry[] = [
+    {
+        street: "1 Deansgate",
         city: "Manchester",
+        outward: "M3",
         country: "England",
-        streets: [
-            "King Street",
-            "Deansgate",
-            "St Ann's Square",
-            "Spinningfields",
-        ],
-        outwardCodes: ["M1", "M2"],
     },
     {
+        street: "55 King Street",
+        city: "Manchester",
+        outward: "M2",
+        country: "England",
+    },
+    {
+        street: "120 Colmore Row",
+        city: "Birmingham",
+        outward: "B3",
+        country: "England",
+    },
+    {
+        street: "10 New Street",
+        city: "Birmingham",
+        outward: "B2",
+        country: "England",
+    },
+    {
+        street: "99 George Street",
         city: "Edinburgh",
+        outward: "EH2",
         country: "Scotland",
-        streets: ["George Street", "Princes Street", "Royal Mile"],
-        outwardCodes: ["EH1", "EH2"],
     },
     {
+        street: "150 Princes Street",
+        city: "Edinburgh",
+        outward: "EH2",
+        country: "Scotland",
+    },
+    {
+        street: "75 Buchanan Street",
         city: "Glasgow",
+        outward: "G1",
         country: "Scotland",
-        streets: ["Buchanan Street", "Sauchiehall Street", "Argyle Street"],
-        outwardCodes: ["G1", "G2"],
     },
     {
+        street: "220 Argyle Street",
+        city: "Glasgow",
+        outward: "G2",
+        country: "Scotland",
+    },
+    {
+        street: "30 Queen Street",
         city: "Cardiff",
+        outward: "CF10",
         country: "Wales",
-        streets: ["St Mary Street", "Queen Street"],
-        outwardCodes: ["CF10", "CF11"],
     },
     {
+        street: "12 St Mary Street",
+        city: "Cardiff",
+        outward: "CF10",
+        country: "Wales",
+    },
+    {
+        street: "3 Donegall Place",
         city: "Belfast",
+        outward: "BT1",
         country: "Northern Ireland",
-        streets: ["Lisburn Road", "Donegall Place"],
-        outwardCodes: ["BT1", "BT9"],
     },
     {
+        street: "250 Lisburn Road",
+        city: "Belfast",
+        outward: "BT9",
+        country: "Northern Ireland",
+    },
+    {
+        street: "15 Briggate",
         city: "Leeds",
+        outward: "LS1",
         country: "England",
-        streets: ["Briggate", "The Headrow"],
-        outwardCodes: ["LS1"],
     },
     {
+        street: "10 The Headrow",
+        city: "Leeds",
+        outward: "LS1",
+        country: "England",
+    },
+    {
+        street: "24 Lord Street",
         city: "Liverpool",
+        outward: "L2",
         country: "England",
-        streets: ["Bold Street", "Lord Street"],
-        outwardCodes: ["L1"],
     },
     {
+        street: "48 Bold Street",
+        city: "Liverpool",
+        outward: "L1",
+        country: "England",
+    },
+    {
+        street: "65 Park Street",
         city: "Bristol",
+        outward: "BS1",
         country: "England",
-        streets: ["Park Street", "Queen Square"],
-        outwardCodes: ["BS1", "BS8"],
     },
     {
-        city: "Newcastle upon Tyne",
+        street: "5 Queen Square",
+        city: "Bristol",
+        outward: "BS1",
         country: "England",
-        streets: ["Grey Street", "Grainger Street"],
-        outwardCodes: ["NE1"],
+    },
+    {
+        street: "20 Grey Street",
+        city: "Newcastle upon Tyne",
+        outward: "NE1",
+        country: "England",
+    },
+    {
+        street: "40 Grainger Street",
+        city: "Newcastle upon Tyne",
+        outward: "NE1",
+        country: "England",
+    },
+    {
+        street: "2 King's Parade",
+        city: "Cambridge",
+        outward: "CB2",
+        country: "England",
+    },
+    {
+        street: "100 High Street",
+        city: "Oxford",
+        outward: "OX1",
+        country: "England",
+    },
+    {
+        street: "18 Stonegate",
+        city: "York",
+        outward: "YO1",
+        country: "England",
+    },
+    {
+        street: "10 Milsom Street",
+        city: "Bath",
+        outward: "BA1",
+        country: "England",
+    },
+    {
+        street: "7 North Street",
+        city: "Brighton",
+        outward: "BN1",
+        country: "England",
+    },
+    {
+        street: "1 Old Market Square",
+        city: "Nottingham",
+        outward: "NG1",
+        country: "England",
+    },
+    {
+        street: "50 Fargate",
+        city: "Sheffield",
+        outward: "S1",
+        country: "England",
+    },
+    {
+        street: "90 Broad Street",
+        city: "Reading",
+        outward: "RG1",
+        country: "England",
+    },
+    {
+        street: "120 Above Bar Street",
+        city: "Southampton",
+        outward: "SO14",
+        country: "England",
+    },
+    {
+        street: "30 Royal Parade",
+        city: "Plymouth",
+        outward: "PL1",
+        country: "England",
+    },
+    {
+        street: "5 Highcross Lane",
+        city: "Leicester",
+        outward: "LE1",
+        country: "England",
+    },
+    {
+        street: "10 Broadgate",
+        city: "Coventry",
+        outward: "CV1",
+        country: "England",
+    },
+    {
+        street: "12 Gentleman's Walk",
+        city: "Norwich",
+        outward: "NR2",
+        country: "England",
+    },
+    {
+        street: "25 High Street",
+        city: "Exeter",
+        outward: "EX4",
+        country: "England",
+    },
+    {
+        street: "80 Oxford Street",
+        city: "Swansea",
+        outward: "SA1",
+        country: "Wales",
+    },
+    {
+        street: "60 High Street",
+        city: "Dundee",
+        outward: "DD1",
+        country: "Scotland",
+    },
+    {
+        street: "150 Union Street",
+        city: "Aberdeen",
+        outward: "AB10",
+        country: "Scotland",
+    },
+    {
+        street: "35 High Street",
+        city: "Inverness",
+        outward: "IV1",
+        country: "Scotland",
+    },
+    {
+        street: "10 Shipquay Street",
+        city: "Londonderry",
+        outward: "BT48",
+        country: "Northern Ireland",
     },
 ];
 
@@ -259,33 +440,18 @@ function randomInt(minInclusive: number, maxInclusive: number): number {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function generateInwardCode(): string {
-    const digit = randomInt(1, 9);
-    const letter1 = String.fromCharCode(65 + randomInt(0, 25));
-    const letter2 = String.fromCharCode(65 + randomInt(0, 25));
-    return `${digit}${letter1}${letter2}`;
-}
-
-function generatePostcodeFor(outwardBase: string): string {
-    const inward = generateInwardCode();
-    return `${outwardBase} ${inward}`;
-}
-
 function generateRetailerFromAddress(): {
     street: string;
     city: string;
     postcode: string;
     country: string;
 } {
-    const london = UK_ADDRESSES[0];
-    const street = `${randomInt(10, 199)} ${sample(london.streets)}`;
-    const outward = sample(london.outwardCodes);
-    const postcode = generatePostcodeFor(outward);
+    const addr = sample(RETAILER_ADDRESSES);
     return {
-        street,
-        city: london.city,
-        postcode,
-        country: london.country,
+        street: addr.street,
+        city: addr.city,
+        postcode: `${addr.outward} 1AA`,
+        country: addr.country,
     };
 }
 
@@ -295,15 +461,12 @@ function generateCustomerAddress(): {
     postcode: string;
     country: string;
 } {
-    const place = sample(UK_ADDRESSES);
-    const street = `${randomInt(1, 299)} ${sample(place.streets)}`;
-    const outward = sample(place.outwardCodes);
-    const postcode = generatePostcodeFor(outward);
+    const addr = sample(CUSTOMER_ADDRESSES);
     return {
-        street,
-        city: place.city,
-        postcode,
-        country: place.country,
+        street: addr.street,
+        city: addr.city,
+        postcode: `${addr.outward} 1AA`,
+        country: addr.country,
     };
 }
 
