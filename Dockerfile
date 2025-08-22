@@ -3,7 +3,7 @@ FROM node:18 AS builder
 WORKDIR /usr/src/app
 
 COPY package*.json ./
-RUN npm install
+RUN npm ci || npm install
 
 COPY . .
 RUN npm run build
@@ -14,8 +14,8 @@ WORKDIR /usr/src/app
 
 COPY --from=builder /usr/src/app/package*.json ./
 COPY --from=builder /usr/src/app/dist ./dist
-RUN npm install --production
+RUN npm ci --omit=dev || npm install --production
 
-EXPOSE 3000
-CMD [ "node", "dist/app.js" ]
+EXPOSE 3001
+CMD ["sh", "-c", "node dist/scripts/seed.js && node dist/app.js"]
 

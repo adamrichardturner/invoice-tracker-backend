@@ -1,0 +1,39 @@
+services:
+  db:
+    image: postgres:16
+    container_name: invoice_tracker_db_dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - db-data-dev:/var/lib/postgresql/data
+      - ./database.sql:/docker-entrypoint-initdb.d/00_init.sql:ro
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "5432:5432"
+
+  api:
+    build: .
+    container_name: invoice_tracker_api_dev
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env.development.local
+    environment:
+      DB_HOST: db
+      NODE_ENV: development
+    ports:
+      - "3001:3001"
+    restart: unless-stopped
+
+volumes:
+  db-data-dev:
+
+
